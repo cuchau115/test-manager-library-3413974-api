@@ -33,6 +33,7 @@ return new class extends Migration
             $table->index(['category_id', 'title'], 'ix_book_category_title');
         });
         DB::statement('ALTER TABLE library.book ADD CONSTRAINT ck_book_available_range CHECK (available_copies >= 0 AND available_copies <= total_copies)');
+        DB::statement('ALTER TABLE library.book ADD CONSTRAINT ck_book_total_positive CHECK (total_copies >= 1)');
         DB::statement('CREATE UNIQUE INDEX uq_book_isbn_active ON library.book (isbn) WHERE deleted_at IS NULL');
         DB::statement('DROP INDEX IF EXISTS library.ix_book_category_title');
         DB::statement('CREATE INDEX ix_book_category_title ON library.book (category_id, title) WHERE deleted_at IS NULL');
@@ -51,6 +52,7 @@ return new class extends Migration
             $table->string('role', 40);
             $table->unique('username', 'uq_user_username');
         });
+        DB::statement("ALTER TABLE library.\"user\" ADD CONSTRAINT ck_user_role CHECK (role IN ('admin', 'librarian'))");
 
         Schema::create('loan', function (Blueprint $table) {
             $table->uuid('id')->primary();
@@ -90,10 +92,10 @@ return new class extends Migration
 
         DB::table('category')->insert([
             ['id' => '11111111-1111-4111-8111-111111111111', 'name' => 'Novela'],
-            ['id' => '22222222-2222-4222-8222-222222222222', 'name' => 'Ciencia'],
-            ['id' => '33333333-3333-4333-8333-333333333333', 'name' => 'Historia'],
-            ['id' => '44444444-4444-4444-8444-444444444444', 'name' => 'Tecnología'],
-            ['id' => '55555555-5555-4555-8555-555555555555', 'name' => 'Filosofía'],
+            ['id' => '22222222-2222-4222-8222-222222222222', 'name' => 'Ciencia ficción'],
+            ['id' => '33333333-3333-4333-8333-333333333333', 'name' => 'Ensayo'],
+            ['id' => '44444444-4444-4444-8444-444444444444', 'name' => 'Historia'],
+            ['id' => '55555555-5555-4555-8555-555555555555', 'name' => 'Poesía'],
         ]);
     }
 
