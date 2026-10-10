@@ -18,6 +18,7 @@ class BookModel extends Model
     protected $casts = [
         'total_copies' => 'integer',
         'available_copies' => 'integer',
+        'version' => 'integer',
         'deleted_at' => 'datetime',
     ];
 

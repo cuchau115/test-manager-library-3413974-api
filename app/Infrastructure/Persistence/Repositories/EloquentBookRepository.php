@@ -11,6 +11,9 @@ use DateTimeImmutable;
 
 final class EloquentBookRepository implements BookRepository
 {
+    /** @var array<string, int> */
+    private array $versions = [];
+
     public function nextIdentity(): string
     {
         return (string) \Ramsey\Uuid\Uuid::uuid4();
@@ -22,6 +25,7 @@ final class EloquentBookRepository implements BookRepository
         if ($model === null) {
             $model = new BookModel();
             $model->id = $book->id();
+            $model->version = 0;
         }
 
         $model->title = $book->title();
@@ -32,7 +36,31 @@ final class EloquentBookRepository implements BookRepository
         $model->available_copies = $book->available();
         $model->cover_key = $book->coverKey();
         $model->deleted_at = $book->deletedAt();
-        $model->save();
+
+        // Use cached version for optimistic locking
+        $version = $this->versions[$book->id()] ?? $model->version;
+
+        // Optimistic locking: increment version and check for conflicts
+        $affected = BookModel::where('id', $book->id())
+            ->where('version', $version)
+            ->update([
+                'title' => $model->title,
+                'author' => $model->author,
+                'isbn' => $model->isbn,
+                'category_id' => $model->category_id,
+                'total_copies' => $model->total_copies,
+                'available_copies' => $model->available_copies,
+                'cover_key' => $model->cover_key,
+                'deleted_at' => $model->deleted_at,
+                'version' => $version + 1,
+            ]);
+
+        if ($affected === 0) {
+            throw new \App\Domain\Exception\BookNotAvailable('El libro ha sido modificado por otro proceso. Intente de nuevo.');
+        }
+
+        // Update cached version
+        $this->versions[$book->id()] = $version + 1;
     }
 
     public function findById(string $id): ?Book
@@ -46,7 +74,11 @@ final class EloquentBookRepository implements BookRepository
         $model = BookModel::with('category')
             ->whereNull('deleted_at')
             ->find($id);
-        return $model ? $this->toDomain($model) : null;
+        if ($model === null) {
+            return null;
+        }
+        $this->versions[$id] = $model->version;
+        return $this->toDomain($model);
     }
 
     public function findActiveByIsbn(string $isbn): ?Book
@@ -55,7 +87,11 @@ final class EloquentBookRepository implements BookRepository
             ->whereNull('deleted_at')
             ->where('isbn', $isbn)
             ->first();
-        return $model ? $this->toDomain($model) : null;
+        if ($model === null) {
+            return null;
+        }
+        $this->versions[$model->id] = $model->version;
+        return $this->toDomain($model);
     }
 
     /**
