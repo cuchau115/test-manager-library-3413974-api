@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LoanItemModel extends Model
 {
-    protected $table = 'library.loan_item';
+    protected $table = 'loan_item';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LoanModel extends Model
 {
-    protected $table = 'library.loan';
+    protected $table = 'loan';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

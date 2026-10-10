@@ -22,6 +22,7 @@ final class EloquentBookRepository implements BookRepository
     public function save(Book $book): void
     {
         $model = BookModel::find($book->id());
+        $isNew = $model === null;
         if ($model === null) {
             $model = new BookModel();
             $model->id = $book->id();
@@ -39,6 +40,13 @@ final class EloquentBookRepository implements BookRepository
 
         // Use cached version for optimistic locking
         $version = $this->versions[$book->id()] ?? $model->version;
+
+        if ($isNew) {
+            $model->save();
+            $this->versions[$book->id()] = (int) $model->version;
+
+            return;
+        }
 
         // Optimistic locking: increment version and check for conflicts
         $affected = BookModel::where('id', $book->id())
@@ -66,6 +74,9 @@ final class EloquentBookRepository implements BookRepository
     public function findById(string $id): ?Book
     {
         $model = BookModel::with('category')->find($id);
+        if ($model !== null) {
+            $this->versions[$id] = (int) $model->version;
+        }
         return $model ? $this->toDomain($model) : null;
     }
 
@@ -109,7 +120,11 @@ final class EloquentBookRepository implements BookRepository
             ->whereIn('id', $ids)
             ->get();
 
-        return $models->map(fn ($m) => $this->toDomain($m))->all();
+        return $models->map(function ($model) {
+            $this->versions[$model->id] = (int) $model->version;
+
+            return $this->toDomain($model);
+        })->all();
     }
 
     /**
@@ -135,6 +150,9 @@ final class EloquentBookRepository implements BookRepository
 
         $total = $query->count();
         $models = $query->skip(($page - 1) * $size)->take($size)->get();
+        foreach ($models as $model) {
+            $this->versions[$model->id] = (int) $model->version;
+        }
 
         return [
             'items' => $models->map(fn ($m) => $this->toDomain($m))->all(),
@@ -155,7 +173,7 @@ final class EloquentBookRepository implements BookRepository
             $model->id,
             $model->title,
             $model->author,
-            new Isbn($model->isbn),
+            Isbn::fromString($model->isbn),
             $model->category_id,
             $model->total_copies,
             $model->available_copies,

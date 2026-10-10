@@ -27,10 +27,12 @@ return new class extends Migration
             $table->integer('available_copies');
             $table->string('cover_key', 512)->nullable();
             $table->timestampTz('deleted_at')->nullable();
+            $table->unsignedBigInteger('version');
             $table->foreign('category_id', 'fk_book_category')
                 ->references('id')->on('category')
                 ->onDelete('restrict')->onUpdate('no action');
             $table->index(['category_id', 'title'], 'ix_book_category_title');
+            $table->index('version', 'ix_book_version');
         });
         DB::statement('ALTER TABLE library.book ADD CONSTRAINT ck_book_available_range CHECK (available_copies >= 0 AND available_copies <= total_copies)');
         DB::statement('ALTER TABLE library.book ADD CONSTRAINT ck_book_total_positive CHECK (total_copies >= 1)');

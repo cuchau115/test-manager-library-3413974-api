@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MemberModel extends Model
 {
-    protected $table = 'library.member';
+    protected $table = 'member';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

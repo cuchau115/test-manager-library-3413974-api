@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class UserModel extends Model
 {
-    protected $table = 'library.user';
+    protected $table = 'user';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

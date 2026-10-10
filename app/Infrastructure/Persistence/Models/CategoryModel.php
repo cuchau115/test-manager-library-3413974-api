@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CategoryModel extends Model
 {
-    protected $table = 'library.category';
+    protected $table = 'category';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

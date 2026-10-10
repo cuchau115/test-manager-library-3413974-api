@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BookModel extends Model
 {
-    protected $table = 'library.book';
+    protected $table = 'book';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

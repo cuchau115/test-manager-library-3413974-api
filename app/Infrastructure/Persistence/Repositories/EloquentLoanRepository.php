@@ -77,7 +77,7 @@ final class EloquentLoanRepository implements LoanRepository
             $i->id,
             $i->book_id,
             $i->book_title,
-            new \App\Domain\ValueObject\Isbn($i->isbn),
+            \App\Domain\ValueObject\Isbn::fromString($i->isbn),
             $i->category_name,
             new DateTimeImmutable($i->due_at),
             $i->returned_at ? new DateTimeImmutable($i->returned_at) : null,
@@ -131,20 +131,27 @@ final class EloquentLoanRepository implements LoanRepository
             $query->where('member_id', $memberId);
         }
 
+        if ($status === 'closed') {
+            $query->whereDoesntHave('items', fn ($items) => $items->whereNull('returned_at'));
+        } elseif ($status === 'overdue') {
+            $query->whereHas('items', fn ($items) => $items
+                ->whereNull('returned_at')
+                ->where('due_at', '<', $now->format('Y-m-d H:i:s')));
+        } elseif ($status === 'open') {
+            $query->whereHas('items', fn ($items) => $items
+                ->whereNull('returned_at')
+                ->where('due_at', '>=', $now->format('Y-m-d H:i:s')))
+                ->whereDoesntHave('items', fn ($items) => $items
+                    ->whereNull('returned_at')
+                    ->where('due_at', '<', $now->format('Y-m-d H:i:s')));
+        }
+
         $query->orderBy('loaned_at', 'desc');
 
         $total = $query->count();
         $models = $query->skip(($page - 1) * $size)->take($size)->get();
 
-        $items = $models->map(function ($model) use ($now) {
-            $loan = $this->toDomain($model);
-            return $loan;
-        })->filter(function ($loan) use ($status, $now) {
-            if ($status === null || $status === '') {
-                return true;
-            }
-            return $loan->status($now) === $status;
-        })->values()->all();
+        $items = $models->map(fn ($model) => $this->toDomain($model))->all();
 
         return ['items' => $items, 'total' => $total];
     }
@@ -211,7 +218,7 @@ final class EloquentLoanRepository implements LoanRepository
             $i->id,
             $i->book_id,
             $i->book_title,
-            new \App\Domain\ValueObject\Isbn($i->isbn),
+            \App\Domain\ValueObject\Isbn::fromString($i->isbn),
             $i->category_name,
             new DateTimeImmutable($i->due_at),
             $i->returned_at ? new DateTimeImmutable($i->returned_at) : null,
