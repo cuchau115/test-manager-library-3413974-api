@@ -11,6 +11,9 @@
 - Arquitectura hexagonal: `app/Domain` PHP puro; puertos en `app/Application/Ports`; único punto de
   composición en `CompositionServiceProvider`.
 - Toda tarea exige **evidencia** reproducible (`php artisan test --filter=…`).
+- En la imagen de producción no se instalan dependencias de desarrollo. Para pruebas reproducibles
+  desde PowerShell, ejecutar `.\scripts\test-docker.ps1`; usa el Compose existente en `infra`,
+  instala dependencias solo en el contenedor efímero, aplica migraciones y ejecuta PHPUnit.
 
 ## Workstreams y tareas de este repo (maestro §9.1–§9.6)
 - `api-found`: `T-01.1`…`T-01.5`
