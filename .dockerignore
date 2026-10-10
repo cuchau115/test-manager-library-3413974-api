@@ -1,0 +1,8 @@
+.git
+.env
+vendor
+node_modules
+.vscode
+.idea
+.DS_Store
+storage/logs/*.log
