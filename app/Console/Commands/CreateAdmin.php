@@ -7,7 +7,6 @@ use App\Application\Ports\UserRepository;
 use App\Domain\Enum\Role;
 use App\Domain\Model\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 
 class CreateAdmin extends Command
 {
@@ -33,22 +32,24 @@ class CreateAdmin extends Command
 
         try {
             $normalized = User::normalizeUsername($username);
-            if ($this->users->findByUsername($normalized) !== null) {
-                $this->info("Administrador '$normalized' ya existe.");
+            $existing = $this->users->findByUsername($normalized);
+            if ($existing !== null && $existing->role() === Role::Admin) {
+                $this->info('El administrador inicial ya está configurado.');
 
                 return Command::SUCCESS;
             }
 
             $admin = User::create(
-                $this->users->nextIdentity(),
+                $existing?->id() ?? $this->users->nextIdentity(),
                 $normalized,
                 $this->passwordHasher->hash($password),
                 Role::Admin,
             );
             $this->users->save($admin);
-            $this->info("Administrador '$normalized' creado correctamente.");
-        } catch (\Throwable $e) {
-            Log::error('Error creando administrador', ['error' => $e->getMessage()]);
+            $this->info($existing === null
+                ? 'Administrador inicial creado correctamente.'
+                : 'La cuenta configurada se ha actualizado a administrador.');
+        } catch (\Throwable) {
             $this->error('Error al crear el administrador inicial.');
             return Command::FAILURE;
         }
