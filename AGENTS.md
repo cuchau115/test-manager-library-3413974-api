@@ -30,3 +30,5 @@ Un solo agente por árbol de trabajo; para paralelizar dentro de `api`, usar wor
 - `app:create-admin` promueve solo el `ADMIN_USERNAME` configurado a `admin` y aplica `ADMIN_PASSWORD`; no altera otros usuarios. Verificación de conversión e idempotencia: `tests/Feature/CreateAdminCommandTest.php` (commit `fc6c601`).
 - `ContractTest`/`PostgresSchemaTest` usan ISBN de prueba únicos y toleran préstamos de datos demo existentes; la suite es reproducible tanto sobre la base poblada como vacía.
 - Suite reproducida en Docker/PostgreSQL: `.\scripts\test-docker.ps1` — 104 pruebas y 597 assertions.
+- `GET /` devuelve el JSON de salud. El despliegue usa `SESSION_DRIVER=file` para que las sesiones web no consulten una tabla `sessions` inexistente.
+- Compose y `.env.example` usan `APP_DEBUG=false` para no presentar trazas de Laravel al cliente.
