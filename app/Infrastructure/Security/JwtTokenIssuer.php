@@ -5,7 +5,7 @@ namespace App\Infrastructure\Security;
 use App\Application\Dto\IssuedToken;
 use App\Application\Ports\TokenIssuer;
 use App\Domain\Model\User;
-use Lcobucci\JWT\Builder;
+use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key\InMemory;
 use DateTimeImmutable;
@@ -27,15 +27,17 @@ final class JwtTokenIssuer implements TokenIssuer
 
         $signer = new Sha256();
         $key = InMemory::plainText($this->secretKey);
+        $configuration = Configuration::forSymmetricSigner($signer, $key);
 
-        $token = (new Builder())
+        $token = $configuration->builder()
             ->issuedBy('manager-library')
             ->permittedFor('manager-library')
             ->identifiedBy($user->id())
             ->issuedAt($now)
             ->expiresAt($expiresAt)
+            ->relatedTo($user->id())
             ->withClaim('role', $user->role()->value)
-            ->getToken($signer, $key);
+            ->getToken($configuration->signer(), $configuration->signingKey());
 
         return new IssuedToken(
             token: $token->toString(),

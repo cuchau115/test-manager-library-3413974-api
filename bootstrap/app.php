@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\HealthController;
+use App\Exceptions\Handler;
 use App\Http\Middleware\AuthenticateJwt;
 use App\Http\Middleware\RequireRole;
 use Illuminate\Foundation\Application;

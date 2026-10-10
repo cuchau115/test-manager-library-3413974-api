@@ -14,10 +14,10 @@ class UpdateBookRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['sometimes', 'required', 'string', 'max:250'],
-            'author' => ['sometimes', 'required', 'string', 'max:200'],
-            'category_id' => ['sometimes', 'required', 'uuid', 'exists:library.category,id'],
-            'total_copies' => ['sometimes', 'required', 'integer', 'min:1'],
+            'title' => ['required', 'string', 'max:250'],
+            'author' => ['required', 'string', 'max:200'],
+            'category_id' => ['required', 'uuid', 'exists:category,id'],
+            'total_copies' => ['required', 'integer', 'min:1'],
         ];
     }
 

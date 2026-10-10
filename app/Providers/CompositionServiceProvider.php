@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Application\Ports\Clock;
 use App\Application\Ports\BookRepository;
 use App\Application\Ports\CategoryReader;
 use App\Application\Ports\CoverStorage;
@@ -10,15 +11,20 @@ use App\Application\Ports\MemberRepository;
 use App\Application\Ports\PasswordHasher;
 use App\Application\Ports\ReportReader;
 use App\Application\Ports\TokenIssuer;
+use App\Application\Ports\TokenVerifier;
 use App\Application\Ports\TransactionManager;
 use App\Application\Ports\UserRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentBookRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentCategoryReader;
 use App\Infrastructure\Persistence\Repositories\EloquentLoanRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentMemberRepository;
+use App\Infrastructure\Persistence\Repositories\EloquentReportReader;
 use App\Infrastructure\Persistence\Repositories\EloquentUserRepository;
+use App\Infrastructure\Persistence\DatabaseTransactionManager;
+use App\Infrastructure\Persistence\LaravelClock;
 use App\Infrastructure\Security\ArgonPasswordHasher;
 use App\Infrastructure\Security\JwtTokenIssuer;
+use App\Infrastructure\Security\JwtTokenVerifier;
 use App\Infrastructure\Storage\DiskCoverStorage;
 use Illuminate\Support\ServiceProvider;
 
@@ -35,8 +41,14 @@ class CompositionServiceProvider extends ServiceProvider
         $this->app->bind(TokenIssuer::class, function ($app) {
             return new JwtTokenIssuer($app['config']['library.jwt.secret']);
         });
+        $this->app->bind(TokenVerifier::class, function ($app) {
+            return new JwtTokenVerifier($app['config']['library.jwt.secret']);
+        });
         $this->app->bind(CoverStorage::class, function ($app) {
             return new DiskCoverStorage($app['config']['library.covers_dir']);
         });
+        $this->app->bind(ReportReader::class, EloquentReportReader::class);
+        $this->app->bind(Clock::class, LaravelClock::class);
+        $this->app->bind(TransactionManager::class, DatabaseTransactionManager::class);
     }
 }

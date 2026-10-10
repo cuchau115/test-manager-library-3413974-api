@@ -2,7 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Application\Services\CreateLibrarianService;
+use App\Application\Ports\PasswordHasher;
+use App\Application\Ports\UserRepository;
+use App\Domain\Enum\Role;
+use App\Domain\Model\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -12,7 +15,8 @@ class CreateAdmin extends Command
     protected $description = 'Crear el administrador inicial si no existe';
 
     public function __construct(
-        private readonly CreateLibrarianService $createLibrarianService,
+        private readonly UserRepository $users,
+        private readonly PasswordHasher $passwordHasher,
     ) {
         parent::__construct();
     }
@@ -28,18 +32,24 @@ class CreateAdmin extends Command
         }
 
         try {
-            $this->createLibrarianService->create($username, $password, 'librarian');
-            $this->info("Administrador '$username' creado correctamente.");
-        } catch (\App\Domain\Exception\DomainError $e) {
-            if ($e->code() === 'USERNAME_TAKEN' || $e->code() === 'DUPLICATE') {
-                $this->info("Administrador '$username' ya existe.");
-            } else {
-                $this->error("Error al crear administrador: {$e->getMessage()}");
-                return Command::FAILURE;
+            $normalized = User::normalizeUsername($username);
+            if ($this->users->findByUsername($normalized) !== null) {
+                $this->info("Administrador '$normalized' ya existe.");
+
+                return Command::SUCCESS;
             }
+
+            $admin = User::create(
+                $this->users->nextIdentity(),
+                $normalized,
+                $this->passwordHasher->hash($password),
+                Role::Admin,
+            );
+            $this->users->save($admin);
+            $this->info("Administrador '$normalized' creado correctamente.");
         } catch (\Throwable $e) {
             Log::error('Error creando administrador', ['error' => $e->getMessage()]);
-            $this->error("Error al crear administrador: {$e->getMessage()}");
+            $this->error('Error al crear el administrador inicial.');
             return Command::FAILURE;
         }
 

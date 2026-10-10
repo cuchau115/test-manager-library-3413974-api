@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Loan;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class LoanSearchRequest extends FormRequest
 {
@@ -21,5 +22,16 @@ class LoanSearchRequest extends FormRequest
             'page' => ['nullable', 'integer', 'min:1'],
             'size' => ['nullable', 'integer', 'min:1', 'max:50'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $from = $this->input('from');
+            $to = $this->input('to');
+            if ($from !== null && $to !== null && $from > $to) {
+                $validator->errors()->add('to', 'La fecha final debe ser igual o posterior a la inicial.');
+            }
+        });
     }
 }

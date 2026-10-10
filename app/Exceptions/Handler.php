@@ -39,10 +39,20 @@ class Handler extends ExceptionHandler
     {
         // Validation errors
         if ($e instanceof ValidationException) {
+            $details = [];
+            foreach ($e->errors() as $field => $issues) {
+                foreach ($issues as $issue) {
+                    $details[] = [
+                        'field' => preg_replace_callback('/\.(\d+)\./', fn ($match) => '[' . $match[1] . '].', $field),
+                        'issue' => $issue,
+                    ];
+                }
+            }
+
             return response()->json([
                 'code' => 'VALIDATION_ERROR',
                 'message' => 'Datos de entrada inválidos',
-                'details' => $e->errors(),
+                'details' => $details,
             ], 422);
         }
 
@@ -53,45 +63,66 @@ class Handler extends ExceptionHandler
 
         // Default error
         if ($this->isHttpException($e)) {
-            return response()->json([
-                'code' => 'ERROR',
-                'message' => $e->getMessage(),
-                'details' => [],
-            ], $e->getStatusCode());
-        }
+            $status = $e->getStatusCode();
+            [$code, $message] = match ($status) {
+                401 => ['INVALID_CREDENTIALS', 'Sesión no válida o vencida'],
+                403 => ['FORBIDDEN_ROLE', 'Rol insuficiente'],
+                404 => ['NOT_FOUND', 'Recurso no encontrado'],
+                422 => ['VALIDATION_ERROR', 'Datos de entrada inválidos'],
+                default => ['ERROR', 'No fue posible completar la solicitud'],
+            };
 
-        // Don't expose internal errors in production
-        if (!config('app.debug')) {
             return response()->json([
-                'code' => 'INTERNAL',
-                'message' => 'Error interno del servidor',
+                'code' => $code,
+                'message' => $message,
                 'details' => [],
-            ], 500);
+            ], $status);
         }
 
         return response()->json([
             'code' => 'INTERNAL',
-            'message' => $e->getMessage(),
+            'message' => 'Error interno del servidor',
             'details' => [],
         ], 500);
     }
 
     private function renderDomainError(DomainError $e): Response
     {
-        return match ($e->code()) {
-            'BOOK_NOT_AVAILABLE' => response()->json($e->toArray(), 409),
-            'MEMBER_HAS_OVERDUE' => response()->json($e->toArray(), 409),
-            'MEMBER_LIMIT_EXCEEDED' => response()->json($e->toArray(), 422),
-            'ITEM_ALREADY_RETURNED' => response()->json($e->toArray(), 409),
-            'DUPLICATE_BOOK_IN_LOAN' => response()->json($e->toArray(), 422),
-            'INVALID_DATE_RANGE' => response()->json($e->toArray(), 422),
-            'VALIDATION' => response()->json($e->toArray(), 422),
-            'ISBN_TAKEN' => response()->json($e->toArray(), 409),
-            'DOCUMENT_TAKEN' => response()->json($e->toArray(), 409),
-            'BOOK_HAS_OPEN_LOANS' => response()->json($e->toArray(), 409),
-            'USERNAME_TAKEN' => response()->json($e->toArray(), 409),
-            'FORBIDDEN_ROLE' => response()->json($e->toArray(), 403),
-            default => response()->json($e->toArray(), 400),
+        $businessCode = $e->errorCode();
+        $status = match ($businessCode) {
+            'INVALID_CREDENTIALS' => 401,
+            'FORBIDDEN_ROLE' => 403,
+            'NOT_FOUND' => 404,
+            'USERNAME_TAKEN',
+            'ISBN_TAKEN',
+            'DOCUMENT_TAKEN',
+            'BOOK_HAS_OPEN_LOANS',
+            'BOOK_NOT_AVAILABLE',
+            'MEMBER_HAS_OVERDUE',
+            'ITEM_ALREADY_RETURNED' => 409,
+            default => 422,
         };
+
+        $code = in_array($businessCode, [
+            'INVALID_CREDENTIALS',
+            'FORBIDDEN_ROLE',
+            'NOT_FOUND',
+            'USERNAME_TAKEN',
+            'ISBN_TAKEN',
+            'DOCUMENT_TAKEN',
+            'BOOK_HAS_OPEN_LOANS',
+            'BOOK_NOT_AVAILABLE',
+            'MEMBER_HAS_OVERDUE',
+            'ITEM_ALREADY_RETURNED',
+            'MEMBER_LIMIT_EXCEEDED',
+            'DUPLICATE_BOOK_IN_LOAN',
+            'INVALID_DATE_RANGE',
+        ], true) ? $businessCode : 'VALIDATION_ERROR';
+
+        return response()->json([
+            'code' => $code,
+            'message' => $e->getMessage(),
+            'details' => $e->details(),
+        ], $status);
     }
 }

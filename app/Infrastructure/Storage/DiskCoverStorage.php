@@ -3,7 +3,7 @@
 namespace App\Infrastructure\Storage;
 
 use App\Application\Ports\CoverStorage;
-use InvalidArgumentException;
+use App\Domain\Exception\ValidationError;
 
 final class DiskCoverStorage implements CoverStorage
 {
@@ -55,28 +55,28 @@ final class DiskCoverStorage implements CoverStorage
     private function validate(string $contents, string $mimeType): void
     {
         if (strlen($contents) > self::MAX_SIZE) {
-            throw new InvalidArgumentException('La imagen supera el tamaño máximo de 2 MB.');
+            throw new ValidationError('La imagen supera el tamaño máximo de 2 MB.', [['field' => 'file', 'issue' => 'máximo 2 MB']]);
         }
 
         $finfo = new \finfo(FILEINFO_MIME_TYPE);
         $detectedMime = $finfo->buffer($contents);
 
         if (!in_array($detectedMime, self::ALLOWED_MIME_TYPES, true)) {
-            throw new InvalidArgumentException('Formato de imagen no permitido. Solo JPG y PNG.');
+            throw new ValidationError('Formato de imagen no permitido. Solo JPG y PNG.', [['field' => 'file', 'issue' => 'solo JPG y PNG']]);
         }
 
         if ($detectedMime !== $mimeType) {
-            throw new InvalidArgumentException('El tipo MIME no coincide con el contenido.');
+            throw new ValidationError('El tipo MIME no coincide con el contenido.', [['field' => 'file', 'issue' => 'tipo MIME no coincide con el contenido']]);
         }
 
         // Additional validation: check image dimensions are reasonable
         $imageInfo = @getimagesizefromstring($contents);
         if ($imageInfo === false) {
-            throw new InvalidArgumentException('El archivo no es una imagen válida.');
+            throw new ValidationError('El archivo no es una imagen válida.', [['field' => 'file', 'issue' => 'imagen inválida']]);
         }
 
         if ($imageInfo[0] > 5000 || $imageInfo[1] > 5000) {
-            throw new InvalidArgumentException('Las dimensiones de la imagen son demasiado grandes.');
+            throw new ValidationError('Las dimensiones de la imagen son demasiado grandes.', [['field' => 'file', 'issue' => 'dimensiones demasiado grandes']]);
         }
     }
 }

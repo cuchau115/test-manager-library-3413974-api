@@ -14,17 +14,16 @@ class CoverRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'cover' => ['required', 'file', 'max:2048', 'mimes:jpg,jpeg,png'],
+            'file' => ['required', 'file', 'max:2048'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'cover.required' => 'La portada es obligatoria.',
-            'cover.file' => 'El archivo debe ser una imagen.',
-            'cover.max' => 'La imagen no puede superar 2 MB.',
-            'cover.mimes' => 'Solo se permiten imágenes JPG o PNG.',
+            'file.required' => 'La portada es obligatoria.',
+            'file.file' => 'El archivo debe ser una imagen.',
+            'file.max' => 'La imagen no puede superar 2 MB.',
         ];
     }
 }

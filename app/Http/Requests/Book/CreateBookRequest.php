@@ -17,7 +17,7 @@ class CreateBookRequest extends FormRequest
             'title' => ['required', 'string', 'max:250'],
             'author' => ['required', 'string', 'max:200'],
             'isbn' => ['required', 'string', 'size:13', 'regex:/^\d{13}$/'],
-            'category_id' => ['required', 'uuid', 'exists:library.category,id'],
+            'category_id' => ['required', 'uuid', 'exists:category,id'],
             'total_copies' => ['required', 'integer', 'min:1'],
         ];
     }

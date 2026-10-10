@@ -14,9 +14,9 @@ class CreateLoanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'member_id' => ['required', 'uuid', 'exists:library.member,id'],
+            'member_id' => ['required', 'uuid', 'exists:member,id'],
             'items' => ['required', 'array', 'min:1', 'max:3'],
-            'items.*.book_id' => ['required', 'uuid', 'exists:library.book,id'],
+            'items.*.book_id' => ['required', 'uuid', 'exists:book,id'],
             'loaned_at' => ['nullable', 'date_format:Y-m-d\TH:i:s\Z'],
         ];
     }
