@@ -28,4 +28,5 @@ Un solo agente por árbol de trabajo; para paralelizar dentro de `api`, usar wor
 ## Verificación de integración
 
 - `app:create-admin` promueve solo el `ADMIN_USERNAME` configurado a `admin` y aplica `ADMIN_PASSWORD`; no altera otros usuarios. Verificación de conversión e idempotencia: `tests/Feature/CreateAdminCommandTest.php` (commit `fc6c601`).
-- Suite reproducida en Docker/PostgreSQL tras el cambio: `.\scripts\test-docker.ps1` — 104 pruebas y 596 assertions.
+- `ContractTest`/`PostgresSchemaTest` usan ISBN de prueba únicos y toleran préstamos de datos demo existentes; la suite es reproducible tanto sobre la base poblada como vacía.
+- Suite reproducida en Docker/PostgreSQL: `.\scripts\test-docker.ps1` — 104 pruebas y 597 assertions.

@@ -28,6 +28,7 @@ final class ContractTest extends TestCase
     {
         parent::setUp();
         config(['app.env' => 'production']);
+        $this->isbnSequence = random_int(1000000000, 9999999999);
 
         $this->adminUsername = 'contract-' . strtolower(Uuid::uuid4()->toString());
         UserModel::create([
@@ -201,9 +202,9 @@ final class ContractTest extends TestCase
                     ->modify('-15 days')->format('Y-m-d\TH:i:s\Z'),
             ])->assertCreated()->assertJsonPath('status', 'overdue')->json();
         }
-        $this->getJson('/api/v1/loans/overdue?page=1&size=10')->assertOk()
-            ->assertJsonPath('total', 3)
+        $overdueList = $this->getJson('/api/v1/loans/overdue?page=1&size=50')->assertOk()
             ->assertJsonStructure(['items' => [['loan_id', 'item_id', 'book_title', 'member_name', 'due_at', 'days_late']]]);
+        $this->assertGreaterThanOrEqual(3, $overdueList->json('total'));
         $this->getJson('/api/v1/members/' . $overdueLoans[0]['member_id'])->assertOk()
             ->assertJsonPath('active_loans', 1);
         $this->postJson('/api/v1/loans', [

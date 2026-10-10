@@ -27,7 +27,7 @@ final class PostgresSchemaTest extends TestCase
             (string) Uuid::uuid4(),
             'Version verification',
             'Integration test',
-            Isbn::fromString('9780000000001'),
+            Isbn::fromString(sprintf('978%010d', random_int(1000000000, 9999999999))),
             $categoryId,
             2,
         );
@@ -51,7 +51,7 @@ final class PostgresSchemaTest extends TestCase
                     'id' => (string) Uuid::uuid4(),
                     'title' => 'Invalid total',
                     'author' => 'Constraint check',
-                    'isbn' => '9780000000002',
+                    'isbn' => sprintf('978%010d', random_int(1000000000, 9999999999)),
                     'category_id' => $categoryId,
                     'total_copies' => 0,
                     'available_copies' => 0,
