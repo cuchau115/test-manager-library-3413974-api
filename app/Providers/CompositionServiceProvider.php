@@ -17,6 +17,9 @@ use App\Infrastructure\Persistence\Repositories\EloquentCategoryReader;
 use App\Infrastructure\Persistence\Repositories\EloquentLoanRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentMemberRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentUserRepository;
+use App\Infrastructure\Security\ArgonPasswordHasher;
+use App\Infrastructure\Security\JwtTokenIssuer;
+use App\Infrastructure\Storage\DiskCoverStorage;
 use Illuminate\Support\ServiceProvider;
 
 class CompositionServiceProvider extends ServiceProvider
@@ -28,5 +31,12 @@ class CompositionServiceProvider extends ServiceProvider
         $this->app->bind(UserRepository::class, EloquentUserRepository::class);
         $this->app->bind(CategoryReader::class, EloquentCategoryReader::class);
         $this->app->bind(LoanRepository::class, EloquentLoanRepository::class);
+        $this->app->bind(PasswordHasher::class, ArgonPasswordHasher::class);
+        $this->app->bind(TokenIssuer::class, function ($app) {
+            return new JwtTokenIssuer($app['config']['library.jwt.secret']);
+        });
+        $this->app->bind(CoverStorage::class, function ($app) {
+            return new DiskCoverStorage($app['config']['library.covers_dir']);
+        });
     }
 }
