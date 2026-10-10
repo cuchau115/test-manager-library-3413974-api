@@ -24,3 +24,8 @@
 - `api-tests`: `T-16.10`, `T-16.11`, `T-18.1`, `T-18.2`, `T-19.1`
 
 Un solo agente por árbol de trabajo; para paralelizar dentro de `api`, usar worktrees (maestro §7).
+
+## Verificación de integración
+
+- `app:create-admin` promueve solo el `ADMIN_USERNAME` configurado a `admin` y aplica `ADMIN_PASSWORD`; no altera otros usuarios. Verificación de conversión e idempotencia: `tests/Feature/CreateAdminCommandTest.php` (commit `fc6c601`).
+- Suite reproducida en Docker/PostgreSQL tras el cambio: `.\scripts\test-docker.ps1` — 104 pruebas y 596 assertions.
